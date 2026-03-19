@@ -1,12 +1,21 @@
 #include "insGarden.h"
 
+Device* lamp;
+
 void setup() 
 {
-  setPinOperationPump(2);
-  setPinOpenValvePump(4);
+  Serial.begin(9600);
+  uint8_t pinLamp = 2;
+  //lamp = new Device(pinLamp);
+  lamp = new Activator(pinLamp);
 }
 
 void loop() 
 {
-  activationPump(2000, 3000);
+  lamp->activateDevice();
+  Serial.println(lamp->getState());
+  delay(2000);
+  lamp->deactivateDevice();
+  Serial.println(lamp->getState());
+  delay(2000);
 }

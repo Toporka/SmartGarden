@@ -1,42 +1,47 @@
 #include "insGarden.h"
 
-//uint8_t pinActivationPump;
-uint8_t _pinOperationPump;
-uint8_t _pinOpenValvePump;
+Device::Device(uint8_t pin)
+{
+  _pinActivate = pin;
+  pinMode(_pinActivate, OUTPUT);
+}
+Activator::Activator(uint8_t pin) : Device(pin) {}
 
-/*void setPinActivationPump(uint8_t pin)
+/*void Device::setPinActivate(uint8_t pin)
 {
-  pinActivationPump = pin;
-  pinMode(pinActivationPump, OUTPUT);
+  _pinActivate = pin;
+  pinMode(_pinActivate, OUTPUT);
 }*/
-void setPinOperationPump(uint8_t pin)
+void Device::deactivateDevice()
 {
-  _pinOperationPump = pin;
-  pinMode(_pinOperationPump, OUTPUT);
+  _mask.set(FLAG_NO_ACTIVE);
+  _mask.clear(FLAG_ACTIVE);
+  digitalWrite(_pinActivate, LOW);
 }
-void setPinOpenValvePump(uint8_t pin)
+void Device::activateDevice()
 {
-  _pinOpenValvePump = pin;
-  pinMode(_pinOpenValvePump, OUTPUT);
+  _mask.set(FLAG_ACTIVE);
+  _mask.clear(FLAG_NO_ACTIVE);
+  digitalWrite(_pinActivate, HIGH);
 }
-void activationPump(unsigned short operationTimeMs, unsigned short openValveTimeMs)
+uint16_t Device::getState()
 {
-  // Проверка: null значения
-  if (_pinOperationPump == NULL || _pinOpenValvePump == NULL)
-    throw "The pin has a null value!";
-  // Проверка: Насос заполнен водой?
-  // ...
-  // Закрытие клапана, начало работы насоса
-  digitalWrite(_pinOpenValvePump, LOW);
-  digitalWrite(_pinOperationPump, HIGH);
-  delay(operationTimeMs);
-  // Прекращение работы насоса, открытие клапана
-  digitalWrite(_pinOperationPump, LOW);
-  digitalWrite(_pinOpenValvePump, HIGH);
-  delay(openValveTimeMs);
+  return _mask.read(FLAG_ACTIVE | FLAG_NO_ACTIVE);
 }
-/*void deactivationPump()
+
+void Activator::deactivateDevice()
 {
-  digitalWrite(_pinOperationPump, LOW);
-  digitalWrite(_pinOpenValvePump, LOW);
-}*/
+  _mask.set(FLAG_HALF_CLOSE);
+  _mask.clear(FLAG_HALF_OPEN);
+  digitalWrite(_pinActivate, LOW);
+}
+void Activator::activateDevice()
+{
+  _mask.set(FLAG_HALF_OPEN);
+  _mask.clear(FLAG_HALF_CLOSE);
+  digitalWrite(_pinActivate, HIGH);
+}
+uint16_t Activator::getState()
+{
+  return _mask.read(FLAG_ACTIVE | FLAG_NO_ACTIVE | FLAG_HALF_CLOSE | FLAG_HALF_OPEN);
+}
