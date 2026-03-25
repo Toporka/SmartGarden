@@ -1,3 +1,4 @@
+#include "esp32-hal-gpio.h"
 #include "insGarden.h"
 
 Device::Device(uint8_t pin)
@@ -5,13 +6,14 @@ Device::Device(uint8_t pin)
   _pinActivate = pin;
   pinMode(_pinActivate, OUTPUT);
 }
-Activator::Activator(uint8_t pin) : Device(pin) {}
-
-/*void Device::setPinActivate(uint8_t pin)
+Actuator::Actuator(uint8_t pinEna, uint8_t pinOpen, uint8_t pinClose) : Device(pinEna) 
 {
-  _pinActivate = pin;
-  pinMode(_pinActivate, OUTPUT);
-}*/
+  _pinOpen = pinOpen;
+  _pinClose = pinClose;
+  pinMode(_pinOpen, OUTPUT);
+  pinMode(_pinClose, OUTPUT);
+}
+
 void Device::deactivateDevice()
 {
   _mask.set(FLAG_NO_ACTIVE);
@@ -29,19 +31,21 @@ uint16_t Device::getState()
   return _mask.read(FLAG_ACTIVE | FLAG_NO_ACTIVE);
 }
 
-void Activator::deactivateDevice()
+void Actuator::closeActuator()
 {
-  _mask.set(FLAG_HALF_CLOSE);
-  _mask.clear(FLAG_HALF_OPEN);
-  digitalWrite(_pinActivate, LOW);
+  //_mask.set(FLAG_HALF_OPEN);
+  //_mask.clear(FLAG_HALF_OPEN);
+  digitalWrite(_pinOpen, LOW);
+  digitalWrite(_pinClose, HIGH);
 }
-void Activator::activateDevice()
+void Actuator::openActuator()
 {
-  _mask.set(FLAG_HALF_OPEN);
-  _mask.clear(FLAG_HALF_CLOSE);
-  digitalWrite(_pinActivate, HIGH);
+  //_mask.set(FLAG_HALF_OPEN);
+  //_mask.clear(FLAG_HALF_OPEN);
+  digitalWrite(_pinOpen, HIGH);
+  digitalWrite(_pinClose, LOW);
 }
-uint16_t Activator::getState()
+uint16_t Actuator::getState()
 {
-  return _mask.read(FLAG_ACTIVE | FLAG_NO_ACTIVE | FLAG_HALF_CLOSE | FLAG_HALF_OPEN);
+  return _mask.read(FLAG_ACTIVE | FLAG_NO_ACTIVE | FLAG_HALF_OPEN);
 }

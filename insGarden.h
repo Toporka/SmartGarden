@@ -15,20 +15,21 @@ protected:
   uint8_t _pinActivate;
 public:
   Device(uint8_t pin);
-  //void setPinActivate(uint8_t pin);
   virtual void deactivateDevice();
   virtual void activateDevice();
   virtual uint16_t getState();
 };
 
-class Activator : public Device
+class Actuator : public Device
 {
 protected:
   uint16_t FLAG_HALF_OPEN = 1 << 2;
-  uint16_t FLAG_HALF_CLOSE = 1 << 3;
+  // Пины для открытия и закрытия актуатора
+  uint8_t _pinOpen;
+  uint8_t _pinClose;
 public:
-  Activator(uint8_t pin);
-  void deactivateDevice() override;
-  void activateDevice() override;
+  Actuator(uint8_t pinEna, uint8_t pinOpen, uint8_t pinClose);
+  void openActuator();
+  void closeActuator();
   uint16_t getState() override;
 };
