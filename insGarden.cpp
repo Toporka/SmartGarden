@@ -1,4 +1,3 @@
-#include "esp32-hal-gpio.h"
 #include "insGarden.h"
 
 Device::Device(uint8_t pin)
@@ -33,19 +32,43 @@ uint16_t Device::getState()
 
 void Actuator::closeActuator()
 {
-  //_mask.set(FLAG_HALF_OPEN);
-  //_mask.clear(FLAG_HALF_OPEN);
+  uint16_t time = (millis() - _timer) / 1000;
+  _currentLength -= time * _lengthSecondClose;
+  _timer = millis();
+  if (_currentLength <= _minLength)
+  {
+    _currentLength = _minLength;
+    _mask.clear(FLAG_HALF_OPEN);
+    _mask.set(FLAG_FULL_CLOSE);
+  }
+  else
+  {
+    _mask.clear(FLAG_FULL_OPEN);
+    _mask.set(FLAG_HALF_OPEN);
+  }
   digitalWrite(_pinOpen, LOW);
   digitalWrite(_pinClose, HIGH);
 }
 void Actuator::openActuator()
 {
-  //_mask.set(FLAG_HALF_OPEN);
-  //_mask.clear(FLAG_HALF_OPEN);
+  uint16_t time = (millis() - _timer) / 1000;
+  _currentLength += time * _lengthSecondOpen;
+  _timer = millis();
+  if (_currentLength >= _maxLength)
+  {
+    _currentLength = _maxLength;
+    _mask.clear(FLAG_HALF_OPEN);
+    _mask.set(FLAG_FULL_OPEN);
+  }
+  else
+  {
+    _mask.clear(FLAG_FULL_CLOSE);
+    _mask.set(FLAG_HALF_OPEN);
+  }
   digitalWrite(_pinOpen, HIGH);
   digitalWrite(_pinClose, LOW);
 }
 uint16_t Actuator::getState()
 {
-  return _mask.read(FLAG_ACTIVE | FLAG_NO_ACTIVE | FLAG_HALF_OPEN);
+  return _mask.read(FLAG_ACTIVE | FLAG_NO_ACTIVE | FLAG_HALF_OPEN | FLAG_FULL_OPEN | FLAG_FULL_CLOSE);
 }
