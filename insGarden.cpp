@@ -6,7 +6,7 @@ Device::Device(uint8_t pin)
   _pinActivate = pin;
   pinMode(_pinActivate, OUTPUT);
 }
-Actuator::Actuator(uint8_t pinOpen, uint8_t pinClose, uint8_t pinEna = -1) : Device(pinEna) 
+Actuator::Actuator(uint8_t pinOpen, uint8_t pinClose, uint8_t pinEna) : Device(pinEna) 
 {
   _pinOpen = pinOpen;
   _pinClose = pinClose;
