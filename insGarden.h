@@ -3,9 +3,10 @@
 #include "esp32-hal-gpio.h"
 #include "esp32-hal.h"
 #include "DHT.h"
+#include "GyverDS18.h"
 #include <sys/_stdint.h>
 #include <stdint.h>
-#include "GyverDS18.h"
+#include <Adafruit_INA219.h>
 
 class Device
 {
@@ -17,6 +18,7 @@ protected:
   uint16_t FLAG_NO_ACTIVE = 1 << 1;
   // Пин активации устройства
   uint8_t _pinActivate;
+  Device();
 public:
   Device(uint8_t pin);
   virtual void deactivateDevice();
@@ -42,9 +44,9 @@ private:
   const float _lengthSecondClose = 1;
   float _currentLength = 0;
 public:
-  Actuator(uint8_t pinOpen, uint8_t pinClose, uint8_t pinEna);
-  void openActuator();
-  void closeActuator();
+  Actuator(uint8_t pinOpen, uint8_t pinClose);
+  void deactivateDevice() override;
+  void activateDevice() override;
   uint16_t getState() override;
   float getLength();
 };
@@ -80,4 +82,39 @@ public:
   bool writeRAM(uint8_t b0, uint8_t b1, uint64_t addr);
   bool copyRAM(uint64_t addr);
   bool recallRAM(uint64_t addr);
+};
+
+class StepperMotorDriver : public Device
+{
+private:
+  //uint8_t _pinENA;
+  //uint8_t _pinIN1;
+  //uint8_t _pinIN2;
+  //uint8_t _pinIN3;
+  //uint8_t _pinIN4;
+  //static const uint8_t NO_PIN = 255;
+public:
+  StepperMotorDriver(uint8_t _pinENA);
+  //StepperMotorDriver(uint8_t _pinENA, uint8_t _pinIN1, uint8_t _pinIN2, uint8_t _pinIN3, uint8_t _pinIN4);
+  //void digitalWritePinIN(uint8_t pin, uint8_t val)
+  //{
+  //  if (_pinIN1 == pin) digitalWrite(_pinIN1, val);
+  //  else if (_pinIN2 == pin) digitalWrite(_pinIN2, val);
+  //  else if (_pinIN3 == pin) digitalWrite(_pinIN3, val);
+  //  else if (_pinIN4 == pin) digitalWrite(_pinIN4, val);
+  //}
+};
+
+class INA219Sensor : public Device
+{
+private:
+  Adafruit_INA219 _ina219;
+public:
+  INA219Sensor(uint8_t pin);
+  void activateDevice() override;
+  float getShuntVoltageMV();
+  float getBusVoltageV();
+  float getCurrentMA();
+  float getPoweMW();
+  float getLoadVoltage();
 };

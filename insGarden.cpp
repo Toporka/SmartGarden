@@ -1,20 +1,29 @@
-#include <stdint.h>
 #include "insGarden.h"
 
+Device::Device() {}
 Device::Device(uint8_t pin)
 {
   _pinActivate = pin;
   pinMode(_pinActivate, OUTPUT);
 }
-Actuator::Actuator(uint8_t pinOpen, uint8_t pinClose, uint8_t pinEna) : Device(pinEna) 
+Actuator::Actuator(uint8_t pinOpen, uint8_t pinClose)
 {
   _pinOpen = pinOpen;
   _pinClose = pinClose;
   pinMode(_pinOpen, OUTPUT);
   pinMode(_pinClose, OUTPUT);
 }
-DHTSensor::DHTSensor(uint8_t pin) : Device(pin), _HT(pin, DHT11) {};
-DS18Sensor::DS18Sensor(uint8_t pin, bool parasite = true) : Device(pin), _DS18(pin, parasite) {};
+DHTSensor::DHTSensor(uint8_t pin) : Device(pin), _HT(pin, DHT11) {}
+DS18Sensor::DS18Sensor(uint8_t pin, bool parasite = true) : Device(pin), _DS18(pin, parasite) {}
+StepperMotorDriver::StepperMotorDriver(uint8_t _pinENA) : Device(_pinENA) {}
+//StepperMotorDriver::StepperMotorDriver(uint8_t _pinENA, uint8_t _pinIN1 = NO_PIN, uint8_t _pinIN2 = NO_PIN, uint8_t _pinIN3 = NO_PIN, uint8_t _pinIN4 = NO_PIN) : Device(_pinENA)
+//{
+//  if (_pinIN1 != NO_PIN) pinMode(_pinIN1, OUTPUT);
+//  if (_pinIN2 != NO_PIN) pinMode(_pinIN2, OUTPUT);
+//  if (_pinIN3 != NO_PIN) pinMode(_pinIN3, OUTPUT);
+//  if (_pinIN4 != NO_PIN) pinMode(_pinIN4, OUTPUT);
+//}
+INA219Sensor::INA219Sensor(uint8_t pin) : Device(pin), _ina219(pin) {}
 
 void Device::deactivateDevice()
 {
@@ -33,7 +42,7 @@ uint16_t Device::getState()
   return _mask.read(FLAG_ACTIVE | FLAG_NO_ACTIVE);
 }
 
-void Actuator::closeActuator()
+void Actuator::deactivateDevice()
 {
   uint16_t time = (millis() - _timer) / 1000;
   _currentLength -= time * _lengthSecondClose;
@@ -52,7 +61,7 @@ void Actuator::closeActuator()
   digitalWrite(_pinOpen, LOW);
   digitalWrite(_pinClose, HIGH);
 }
-void Actuator::openActuator()
+void Actuator::activateDevice()
 {
   uint16_t time = (millis() - _timer) / 1000;
   _currentLength += time * _lengthSecondOpen;
@@ -140,4 +149,29 @@ bool DS18Sensor::copyRAM(uint64_t addr)
 bool DS18Sensor::recallRAM(uint64_t addr)
 {
   return _DS18.recallRAM(addr);
+}
+
+void INA219Sensor::activateDevice()
+{
+  _ina219.begin();
+}
+float INA219Sensor::getShuntVoltageMV()
+{
+  return _ina219.getShuntVoltage_mV();
+}
+float INA219Sensor::getBusVoltageV()
+{
+  return _ina219.getBusVoltage_V();
+}
+float INA219Sensor::getCurrentMA()
+{
+  return _ina219.getCurrent_mA();
+}
+float INA219Sensor::getPoweMW()
+{
+  return _ina219.getPower_mW();
+}
+float INA219Sensor::getLoadVoltage()
+{
+  return getBusVoltageV() + (getShuntVoltageMV() / 1000);
 }
