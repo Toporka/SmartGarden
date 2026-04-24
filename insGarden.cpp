@@ -16,13 +16,6 @@ Actuator::Actuator(uint8_t pinOpen, uint8_t pinClose)
 DHTSensor::DHTSensor(uint8_t pin) : Device(pin), _HT(pin, DHT11) {}
 DS18Sensor::DS18Sensor(uint8_t pin, bool parasite = true) : Device(pin), _DS18(pin, parasite) {}
 StepperMotorDriver::StepperMotorDriver(uint8_t _pinENA) : Device(_pinENA) {}
-//StepperMotorDriver::StepperMotorDriver(uint8_t _pinENA, uint8_t _pinIN1 = NO_PIN, uint8_t _pinIN2 = NO_PIN, uint8_t _pinIN3 = NO_PIN, uint8_t _pinIN4 = NO_PIN) : Device(_pinENA)
-//{
-//  if (_pinIN1 != NO_PIN) pinMode(_pinIN1, OUTPUT);
-//  if (_pinIN2 != NO_PIN) pinMode(_pinIN2, OUTPUT);
-//  if (_pinIN3 != NO_PIN) pinMode(_pinIN3, OUTPUT);
-//  if (_pinIN4 != NO_PIN) pinMode(_pinIN4, OUTPUT);
-//}
 INA219Sensor::INA219Sensor(uint8_t pin) : Device(pin), _ina219(pin) {}
 
 void Device::deactivateDevice()
@@ -40,6 +33,25 @@ void Device::activateDevice()
 uint16_t Device::getState()
 {
   return _mask.read(FLAG_ACTIVE | FLAG_NO_ACTIVE);
+}
+
+void EventBus::subscribe(EventType type, Device* device)
+{
+  _subscribers[type].push_back(device);
+}
+void EventBus::unsubscribe(EventType type, Device* device)
+{
+  for (int i = 0; i < _subscribers[type].size(); i++)
+    if (_subscribers[type][i] == device)
+    {
+      _subscribers[type].erase(_subscribers[type].cbegin() + i);
+      return;
+    }
+}
+void EventBus::notify(EventType type, Event event)
+{
+  for (Device* device : _subscribers[type])
+    device->acceptEvent(event);
 }
 
 void Actuator::deactivateDevice()
@@ -88,6 +100,24 @@ float Actuator::getLength()
 {
   return _currentLength;
 }
+void Actuator::acceptEvent(Event event)
+{
+	if (event.sender == DeviceType::SensorTemp)
+	{
+		if (event.type == EventType::INFO)
+		{
+			std::cout << "INFO: " << event.text << std::endl;
+		}
+		else if (event.type == EventType::WARNING_TEMP_HIGH)
+		{
+			std::cout << "WARNING_TEMP_HIGH: " << event.text << std::endl;
+		}
+		else if (event.type == EventType::WARNING_TEMP_LOW)
+		{
+			std::cout << "WARNING_TEMP_LOW: " << event.text << std::endl;
+		}
+	}
+}
 
 void DHTSensor::activateDevice()
 {
@@ -101,6 +131,8 @@ float DHTSensor::getTemperature(bool S, bool force)
 {
   return _HT.readTemperature(S, force);
 }
+void DHTSensor::acceptEvent(Event event)
+{}
 
 uint8_t DS18Sensor::tick()
 {
@@ -150,6 +182,8 @@ bool DS18Sensor::recallRAM(uint64_t addr)
 {
   return _DS18.recallRAM(addr);
 }
+void DS18Sensor::acceptEvent(Event event)
+{}
 
 void INA219Sensor::activateDevice()
 {
@@ -175,3 +209,5 @@ float INA219Sensor::getLoadVoltage()
 {
   return getBusVoltageV() + (getShuntVoltageMV() / 1000);
 }
+void INA219Sensor::acceptEvent(Event event)
+{}

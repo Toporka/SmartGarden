@@ -1,12 +1,35 @@
+#include <sys/_stdint.h>
+#include <stdint.h>
+#include <Adafruit_INA219.h>
+#include <iostream>
+#include <map>
+#include <vector>
 #include "BitFlags.h"
-#include "EventSignal.h"
 #include "esp32-hal-gpio.h"
 #include "esp32-hal.h"
 #include "DHT.h"
 #include "GyverDS18.h"
-#include <sys/_stdint.h>
-#include <stdint.h>
-#include <Adafruit_INA219.h>
+
+enum class EventType
+{
+	INFO = 0,
+	WARNING = 1,
+	WARNING_TEMP_LOW = 2,
+	WARNING_TEMP_HIGH = 3,
+};
+
+enum class DeviceType
+{
+	Actuator = 0,
+	SensorTemp = 1,
+};
+
+struct Event
+{
+	DeviceType sender;
+	EventType type;
+	std::string text;
+};
 
 class Device
 {
@@ -19,11 +42,22 @@ protected:
   // Пин активации устройства
   uint8_t _pinActivate;
   Device();
-public:
   Device(uint8_t pin);
+public:
   virtual void deactivateDevice();
   virtual void activateDevice();
   virtual uint16_t getState();
+  virtual void acceptEvent(Event event) = 0;
+};
+
+class EventBus
+{
+private:
+	std::map<EventType, std::vector<Device*>> _subscribers;
+public:
+	void subscribe(EventType type, Device* device);
+	void unsubscribe(EventType type, Device* device);
+	void notify(EventType type, Event event);
 };
 
 class Actuator : public Device
@@ -48,6 +82,7 @@ public:
   void deactivateDevice() override;
   void activateDevice() override;
   uint16_t getState() override;
+  void acceptEvent(Event event) override;
   float getLength();
 };
 
@@ -62,6 +97,7 @@ public:
   float getHumidity();
   // Получить температуру
   float getTemperature(bool S, bool force);
+  void acceptEvent(Event event) override;
 };
 
 class DS18Sensor : public Device
@@ -82,27 +118,14 @@ public:
   bool writeRAM(uint8_t b0, uint8_t b1, uint64_t addr);
   bool copyRAM(uint64_t addr);
   bool recallRAM(uint64_t addr);
+  void acceptEvent(Event event) override;
 };
 
 class StepperMotorDriver : public Device
 {
-private:
-  //uint8_t _pinENA;
-  //uint8_t _pinIN1;
-  //uint8_t _pinIN2;
-  //uint8_t _pinIN3;
-  //uint8_t _pinIN4;
-  //static const uint8_t NO_PIN = 255;
 public:
   StepperMotorDriver(uint8_t _pinENA);
-  //StepperMotorDriver(uint8_t _pinENA, uint8_t _pinIN1, uint8_t _pinIN2, uint8_t _pinIN3, uint8_t _pinIN4);
-  //void digitalWritePinIN(uint8_t pin, uint8_t val)
-  //{
-  //  if (_pinIN1 == pin) digitalWrite(_pinIN1, val);
-  //  else if (_pinIN2 == pin) digitalWrite(_pinIN2, val);
-  //  else if (_pinIN3 == pin) digitalWrite(_pinIN3, val);
-  //  else if (_pinIN4 == pin) digitalWrite(_pinIN4, val);
-  //}
+  void acceptEvent(Event event) override;
 };
 
 class INA219Sensor : public Device
@@ -117,4 +140,5 @@ public:
   float getCurrentMA();
   float getPoweMW();
   float getLoadVoltage();
+  void acceptEvent(Event event) override;
 };
