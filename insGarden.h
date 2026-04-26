@@ -1,14 +1,21 @@
+#include <Arduino.h>
 #include <sys/_stdint.h>
 #include <stdint.h>
 #include <Adafruit_INA219.h>
-#include <iostream>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 #include <map>
 #include <vector>
+#include <ArduinoJson.h>
+#include <SPIFFS.h>
 #include "BitFlags.h"
-#include "esp32-hal-gpio.h"
-#include "esp32-hal.h"
 #include "DHT.h"
-#include "GyverDS18.h"
+
+enum class DeviceType
+{
+	SensorTemp = 0,
+	Actuator = 1,
+};
 
 enum class EventType
 {
@@ -18,46 +25,48 @@ enum class EventType
 	WARNING_TEMP_HIGH = 3,
 };
 
-enum class DeviceType
+struct EventKey
 {
-	Actuator = 0,
-	SensorTemp = 1,
-};
+	String nameDevice;
+	EventType event;
 
-struct Event
-{
-	DeviceType sender;
-	EventType type;
-	std::string text;
+	bool operator<(const EventKey& other) const 
+	{
+		if (nameDevice != other.nameDevice)
+			return nameDevice < other.nameDevice;
+		if (event != other.event)
+			return event < other.event;
+		return false;
+	}
 };
 
 class Device
 {
+private:
+  String _name;
+  DeviceType _type;
 protected:
   // Маска
   BitFlags16 _mask;
   // Флаги состояний
   uint16_t FLAG_ACTIVE = 1 << 0;
   uint16_t FLAG_NO_ACTIVE = 1 << 1;
-  // Пин активации устройства
-  uint8_t _pinActivate;
-  Device();
-  Device(uint8_t pin);
+  Device(String name, DeviceType type);
 public:
-  virtual void deactivateDevice();
-  virtual void activateDevice();
+  String getName();
+  DeviceType getType();
   virtual uint16_t getState();
-  virtual void acceptEvent(Event event) = 0;
+  virtual void acceptEvent(EventType event) = 0;
 };
 
 class EventBus
 {
 private:
-	std::map<EventType, std::vector<Device*>> _subscribers;
+	std::map<EventKey, std::vector<Device*>> _subscribers;
 public:
-	void subscribe(EventType type, Device* device);
-	void unsubscribe(EventType type, Device* device);
-	void notify(EventType type, Event event);
+	void subscribe(EventKey key, Device* device);
+	void unsubscribe(EventKey key, Device* device);
+	void notify(EventKey key);
 };
 
 class Actuator : public Device
@@ -70,19 +79,19 @@ private:
   uint8_t _pinOpen;
   uint8_t _pinClose;
   // Внутренний таймер
-  uint32_t _timer = 0;
+  uint32_t _timer;
   // Данные для измерения длины штопора
-  const uint16_t _maxLength = 100;
-  const uint16_t _minLength = 0;
-  const float _lengthSecondOpen = 1.5;
-  const float _lengthSecondClose = 1;
-  float _currentLength = 0;
+  uint16_t _maxLength;
+  uint16_t _minLength;
+  float _lengthSecondOpen;
+  float _lengthSecondClose;
+  float _currentLength;
 public:
-  Actuator(uint8_t pinOpen, uint8_t pinClose);
-  void deactivateDevice() override;
-  void activateDevice() override;
+  Actuator(String name, DeviceType type, uint8_t pinOpen, uint8_t pinClose, uint16_t maxLength, uint16_t minLength, float lengthSecondOpen, float lengthSecondClose, float currentLength);
+  void negativeSignal();
+  void plusSignal();
   uint16_t getState() override;
-  void acceptEvent(Event event) override;
+  void acceptEvent(EventType event) override;
   float getLength();
 };
 
@@ -90,42 +99,42 @@ class DHTSensor : public Device
 {
 private:
   DHT _HT;
+  float _warnTempLow;
+  float _warnTempHigh;
+  float _warnHumLow;
+  float _warnHumHigh;
+  float _currentTemp;
+  float _currentHum;
 public:
-  DHTSensor(uint8_t pin);
-  void activateDevice() override;
+  DHTSensor(String name, DeviceType type, uint8_t pin, float warnTempLow, float warnTempHigh, float warnHumLow, float warnHumHigh, float currentTemp, float currentHum);
+  void activateDevice();
   // Получить влажность воздуха
   float getHumidity();
   // Получить температуру
   float getTemperature(bool S, bool force);
-  void acceptEvent(Event event) override;
+  void acceptEvent(EventType event) override;
 };
 
 class DS18Sensor : public Device
 {
 private:
-  GyverDS18 _DS18;
+  OneWire oneWire;
+  DallasTemperature sensors;
 public:
-  DS18Sensor(uint8_t pin, bool parasite);
-  uint8_t tick();
-  bool setResolution(uint8_t res);
-  bool setResolution(uint8_t res, uint64_t addr);
-  uint8_t readResolution(uint64_t addr);
-  uint8_t readPower(uint64_t addr);
-  bool requestTemp();
-  bool requestTemp(uint64_t addr);
-  bool readTemp(uint64_t addr);
-  bool readRAM(gds::RAM* ram, uint64_t addr);
-  bool writeRAM(uint8_t b0, uint8_t b1, uint64_t addr);
-  bool copyRAM(uint64_t addr);
-  bool recallRAM(uint64_t addr);
-  void acceptEvent(Event event) override;
+  DS18Sensor(String name, DeviceType type, uint8_t pin);
+  void activateDevice();
+  void requestTemperatures();
+  void getTempCByIndex(uint16_t index);
+  void acceptEvent(EventType event) override;
 };
 
 class StepperMotorDriver : public Device
 {
+  uint8_t _pinENA;
 public:
-  StepperMotorDriver(uint8_t _pinENA);
-  void acceptEvent(Event event) override;
+  StepperMotorDriver(String name, DeviceType type, uint8_t pinENA);
+  void activateDevice();
+  void acceptEvent(EventType event) override;
 };
 
 class INA219Sensor : public Device
@@ -133,12 +142,37 @@ class INA219Sensor : public Device
 private:
   Adafruit_INA219 _ina219;
 public:
-  INA219Sensor(uint8_t pin);
-  void activateDevice() override;
+  INA219Sensor(String name, DeviceType type, uint8_t pin);
+  void activateDevice();
   float getShuntVoltageMV();
   float getBusVoltageV();
   float getCurrentMA();
   float getPoweMW();
   float getLoadVoltage();
-  void acceptEvent(Event event) override;
+  void acceptEvent(EventType event) override;
 };
+
+class Creator
+{
+public:
+  virtual Device* Create(JsonObject file) = 0;
+};
+
+class CreatorDHTSensor : public Creator
+{
+public:
+  Device* Create(JsonObject file) override;
+};
+
+class CreatorActuator : public Creator
+{
+public:
+  Device* Create(JsonObject file) override;
+};
+
+// Список всех устройств конфигурации
+inline std::vector<Device*> arrayDevices;
+// Шина событий
+inline EventBus eventBus;
+
+JsonDocument loadJson(const String& fileName);

@@ -1,0 +1,51 @@
+{
+  "DHTsensors": [
+    {
+      "name": "Sensor #1",
+      "deviceType": 0,
+      "pin": 4,
+      "warnTempLow": 16.0,
+      "warnTempHigh": 30.0,
+      "warnHumLow": 16.0,
+      "warnHumHigh": 30.0,
+      "currentTemp": 15,
+      "currentHum": 15
+    }
+  ],
+  "actuators": [
+    {
+      "name": "Actuator #1",
+      "deviceType": 1,
+      "pinOpen": 5,
+      "pinClose": 13,
+      "maxLength": 250,
+      "minLength": 15,
+      "lengthSecondOpen": 1.5,
+      "lengthSecondClose": 0.5,
+      "currentLength": 15
+    },
+    {
+      "name": "Actuator #2",
+      "deviceType": 1,
+      "pinOpen": 16,
+      "pinClose": 17,
+      "maxLength": 250,
+      "minLength": 15,
+      "lengthSecondOpen": 1.5,
+      "lengthSecondClose": 0.5,
+      "currentLength": 15
+    }
+  ],
+  "routes": [
+    {
+      "namePublisher": "Sensor #1",
+      "events": [ 2, 3 ],
+      "nameSubscribers": [ "Actuator #1", "Actuator #2" ]
+    },
+    {
+      "namePublisher": "Sensor #1",
+      "events": [ 0 ],
+      "nameSubscribers": [ "Actuator #1" ]
+    }
+  ]
+}
