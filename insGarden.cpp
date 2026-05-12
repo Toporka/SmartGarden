@@ -53,7 +53,10 @@ uint16_t Device::getState()
 
 void EventBus::subscribe(EventKey key, Device* device)
 {
-	_subscribers[key].push_back(device);
+  if (_subscribers.find(key) == _subscribers.end())
+  {
+    _subscribers[key].push_back(device);
+  }
 }
 void EventBus::unsubscribe(EventKey key, Device* device)
 {
@@ -239,16 +242,18 @@ JsonDocument loadJson(const String& fileName)
   JsonDocument doc;
   
   File file = SPIFFS.open(fileName, "r");
-  if (!file) {
+  if (!file)
+  {
     Serial.println("Не удалось открыть файл конфигурации");
-    return doc;  // Возвращаем пустой документ
+    return doc;
   }
   
   String fileContent = file.readString();
   file.close();
   
   DeserializationError error = deserializeJson(doc, fileContent);
-  if (error) {
+  if (error)
+  {
     Serial.print("Ошибка парсинга: ");
     Serial.println(error.c_str());
   }

@@ -4,7 +4,8 @@ void setup()
 {
   Serial.begin(115200);
 
-  if (!SPIFFS.begin(true)) {
+  if (!SPIFFS.begin(true))
+  {
     Serial.println("Ошибка монтирования SPIFFS");
     return;
   }

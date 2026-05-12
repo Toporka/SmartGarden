@@ -10,6 +10,7 @@
 #include <SPIFFS.h>
 #include "BitFlags.h"
 #include "DHT.h"
+#include "tinyexpr.h"
 
 enum class DeviceType
 {
