@@ -10,12 +10,13 @@
 #include <SPIFFS.h>
 #include "BitFlags.h"
 #include "DHT.h"
-#include "tinyexpr.h"
 
 enum class DeviceType
 {
 	SensorTemp = 0,
 	Actuator = 1,
+  Driver = 2,
+  SensorStrengthToque = 3
 };
 
 enum class EventType
@@ -166,6 +167,24 @@ public:
 };
 
 class CreatorActuator : public Creator
+{
+public:
+  Device* Create(JsonObject file) override;
+};
+
+class CreatorDS18 : public Creator
+{
+public:
+  Device* Create(JsonObject file) override;
+};
+
+class CreatorDrivers : public Creator
+{
+public:
+  Device* Create(JsonObject file) override;
+};
+
+class CreatorINA219 : public Creator
 {
 public:
   Device* Create(JsonObject file) override;

@@ -36,6 +36,27 @@
       "currentLength": 15
     }
   ],
+  "DS18sensors": [
+    {
+      "name": "DS18 #1",
+      "deviceType": 0,
+      "pin": 18
+    }
+  ],
+  "drivers": [
+    {
+      "name": "Driver #1",
+      "deviceType": 2,
+      "pin": 19
+    }
+  ],
+  "INA219Sensors": [
+    {
+      "name": "INA219 #1",
+      "deviceType": 3,
+      "pin": 22
+    }
+  ],
   "routes": [
     {
       "namePublisher": "Sensor #1",

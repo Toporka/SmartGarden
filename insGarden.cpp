@@ -236,6 +236,36 @@ Device* CreatorActuator::Create(JsonObject fileJson)
     fileJson["currentLength"].as<float>());
   return actuator;
 }
+Device* CreatorDS18::Create(JsonObject fileJson)
+{
+  int deviceTypeInt = fileJson["deviceType"].as<int>();
+  DeviceType deviceType = static_cast<DeviceType>(deviceTypeInt);
+  DS18Sensor* sensor = new DS18Sensor(
+    fileJson["name"].as<String>(),
+    deviceType,
+    fileJson["pin"].as<uint8_t>());
+  return sensor;
+}
+Device* CreatorDrivers::Create(JsonObject fileJson)
+{
+  int deviceTypeInt = fileJson["deviceType"].as<int>();
+  DeviceType deviceType = static_cast<DeviceType>(deviceTypeInt);
+  StepperMotorDriver* driver = new StepperMotorDriver(
+    fileJson["name"].as<String>(),
+    deviceType,
+    fileJson["pin"].as<uint8_t>());
+  return driver;
+}
+Device* CreatorINA219::Create(JsonObject fileJson)
+{
+  int deviceTypeInt = fileJson["deviceType"].as<int>();
+  DeviceType deviceType = static_cast<DeviceType>(deviceTypeInt);
+  INA219Sensor* ina219 = new INA219Sensor(
+    fileJson["name"].as<String>(),
+    deviceType,
+    fileJson["pin"].as<uint8_t>());
+  return ina219;
+}
 
 JsonDocument loadJson(const String& fileName)
 {
