@@ -16,7 +16,8 @@ enum class DeviceType
 	SensorTemp = 0,
 	Actuator = 1,
   Driver = 2,
-  SensorStrengthToque = 3
+  SensorStrengthToque = 3,
+  Button = 4
 };
 
 enum class EventType
@@ -25,6 +26,8 @@ enum class EventType
 	WARNING = 1,
 	WARNING_TEMP_LOW = 2,
 	WARNING_TEMP_HIGH = 3,
+  BUTTON_CLICK = 4,
+  BUTTON_NO_CLICK = 5
 };
 
 struct EventKey
@@ -154,6 +157,16 @@ public:
   void acceptEvent(EventType event) override;
 };
 
+class Button : public Device
+{
+private:
+  uint8_t _pin;
+public:
+  Button(String name, DeviceType type, uint8_t pin);
+  void checkClick();
+  void acceptEvent(EventType event) override;
+};
+
 class Creator
 {
 public:
@@ -185,6 +198,12 @@ public:
 };
 
 class CreatorINA219 : public Creator
+{
+public:
+  Device* Create(JsonObject file) override;
+};
+
+class CreatorButtons : public Creator
 {
 public:
   Device* Create(JsonObject file) override;

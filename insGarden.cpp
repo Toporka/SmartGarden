@@ -1,3 +1,4 @@
+#include "esp32-hal-gpio.h"
 #include "insGarden.h"
 
 Device::Device(String name, DeviceType type) 
@@ -37,6 +38,11 @@ StepperMotorDriver::StepperMotorDriver(String name, DeviceType type, uint8_t pin
   pinMode(_pinENA, OUTPUT);
 }
 INA219Sensor::INA219Sensor(String name, DeviceType type, uint8_t pin) : Device(name, type), _ina219(pin) {}
+Button::Button(String name, DeviceType type, uint8_t pin) : Device(name, type)
+{
+  _pin = pin;
+  pinMode(_pin, INPUT_PULLUP);
+}
 
 String Device::getName()
 {
@@ -133,6 +139,22 @@ void Actuator::acceptEvent(EventType event)
   {
     
   }
+  else if(event == EventType::BUTTON_CLICK)
+  {
+    pinMode(2, OUTPUT);
+    digitalWrite(_pinOpen, HIGH);
+    Serial.println("BUTTON_CLICK");
+    delay(100);
+    digitalWrite(_pinOpen, LOW);
+  }
+  else if(event == EventType::BUTTON_NO_CLICK)
+  {
+    pinMode(2, OUTPUT);
+    digitalWrite(_pinOpen, HIGH);
+    Serial.println("BUTTON_NO_CLICK");
+    delay(100);
+    digitalWrite(_pinOpen, LOW);
+  }
 }
 
 void DHTSensor::activateDevice()
@@ -204,6 +226,23 @@ float INA219Sensor::getLoadVoltage()
 void INA219Sensor::acceptEvent(EventType event)
 {}
 
+void Button::checkClick()
+{
+  bool state = digitalRead(_pin);
+  if (state == true)
+  {
+    EventKey event{ this->getName(), EventType::BUTTON_CLICK };
+    eventBus.notify(event);
+  }
+  else
+  {
+    EventKey event{ this->getName(), EventType::BUTTON_NO_CLICK };
+    eventBus.notify(event);
+  }
+}
+void Button::acceptEvent(EventType event)
+{}
+
 Device* CreatorDHTSensor::Create(JsonObject fileJson)
 {
   int deviceTypeInt = fileJson["deviceType"].as<int>();
@@ -265,6 +304,16 @@ Device* CreatorINA219::Create(JsonObject fileJson)
     deviceType,
     fileJson["pin"].as<uint8_t>());
   return ina219;
+}
+Device* CreatorButtons::Create(JsonObject fileJson)
+{
+  int deviceTypeInt = fileJson["deviceType"].as<int>();
+  DeviceType deviceType = static_cast<DeviceType>(deviceTypeInt);
+  Button* button = new Button(
+    fileJson["name"].as<String>(),
+    deviceType,
+    fileJson["pin"].as<uint8_t>());
+  return button;
 }
 
 JsonDocument loadJson(const String& fileName)

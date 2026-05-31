@@ -57,15 +57,17 @@
       "pin": 22
     }
   ],
+  "buttons": [
+    {
+      "name": "Button #1",
+      "deviceType": 4,
+      "pin": 0
+    }
+  ],
   "routes": [
     {
-      "namePublisher": "Sensor #1",
-      "events": [ 2, 3 ],
-      "nameSubscribers": [ "Actuator #1", "Actuator #2" ]
-    },
-    {
-      "namePublisher": "Sensor #1",
-      "events": [ 0 ],
+      "namePublisher": "Button #1",
+      "events": [ 4, 5 ],
       "nameSubscribers": [ "Actuator #1" ]
     }
   ]

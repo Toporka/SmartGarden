@@ -22,20 +22,20 @@ void setup()
     return;
   }
 
-  CreatorDHTSensor creatorDHTSensor;
-  JsonArray sensors = file["DHTsensors"].as<JsonArray>();
-  for (JsonObject item : sensors)
-  {
-    Device* sensor = creatorDHTSensor.Create(item);
-    arrayDevices.push_back(sensor);
-  }
-
   CreatorActuator creatorActuator;
   JsonArray actuators = file["actuators"].as<JsonArray>();
   for (JsonObject item : actuators)
   {
     Device* actuator = creatorActuator.Create(item);
     arrayDevices.push_back(actuator);
+  }
+
+  CreatorButtons creatorButtons;
+  JsonArray buttons = file["buttons"].as<JsonArray>();
+  for (JsonObject item : buttons)
+  {
+    Device* button = creatorButtons.Create(item);
+    arrayDevices.push_back(button);
   }
 
   EventBus eventBus;
@@ -59,15 +59,19 @@ void setup()
     }
   }
 
-  EventKey event{ "Sensor #1", EventType::INFO };
-  eventBus.notify(event);
+  EventKey event{ "Button #1", EventType::BUTTON_CLICK };
 }
 
 void loop() 
 {
-  delay(5000);
-  for(Device* device : arrayDevices)
+  for (Device* item : arrayDevices)
   {
-    Serial.println(device->getName().c_str());
+    if(item->getType() == DeviceType::Button)
+    {
+      Button* button = static_cast<Button*>(item);
+      button->checkClick();
+      delay(100);
+    }
   }
+  delay(200);
 }
