@@ -68,13 +68,19 @@ Button: Кнопка (события нажатия)
   "nameSubscribers": ["valve1"],  
   "events": [4]  
 }
+# Типы устройств:
+0 - Датчик температуры (SensorTemp)  
+1 - Актуатор (Actuator)  
+2 - Драйвер (Driver)  
+3 - Датчик силы тока(SensorStrengthToque)  
+4 - Кнопка (Button)
 # Типы событий:
 0 - INFO  
 1 - WARNING  
 2 - WARNING_TEMP_LOW  
 3 - WARNING_TEMP_HIGH  
 4 - BUTTON_CLICK  
-5 - BUTTON_NO_CLICK  
+5 - BUTTON_NO_CLICK
 # Библиотеки
 Adafruit_INA219.h
 OneWire.h
