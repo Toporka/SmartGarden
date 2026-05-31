@@ -129,31 +129,23 @@ void Actuator::acceptEvent(EventType event)
 {
 	if (event == EventType::INFO)
   {
-    
+    Serial.println("INFO");
   }
   else if (event == EventType::WARNING_TEMP_HIGH)
   {
-    
+    Serial.println("WARNING_TEMP_HIGH");
   }
   else if (event == EventType::WARNING_TEMP_LOW)
   {
-    
+    Serial.println("WARNING_TEMP_LOW");
   }
   else if(event == EventType::BUTTON_CLICK)
   {
-    pinMode(2, OUTPUT);
-    digitalWrite(_pinOpen, HIGH);
     Serial.println("BUTTON_CLICK");
-    delay(100);
-    digitalWrite(_pinOpen, LOW);
   }
   else if(event == EventType::BUTTON_NO_CLICK)
   {
-    pinMode(2, OUTPUT);
-    digitalWrite(_pinOpen, HIGH);
     Serial.println("BUTTON_NO_CLICK");
-    delay(100);
-    digitalWrite(_pinOpen, LOW);
   }
 }
 
@@ -229,7 +221,7 @@ void INA219Sensor::acceptEvent(EventType event)
 void Button::checkClick()
 {
   bool state = digitalRead(_pin);
-  if (state == true)
+  if (state == LOW)
   {
     EventKey event{ this->getName(), EventType::BUTTON_CLICK };
     eventBus.notify(event);

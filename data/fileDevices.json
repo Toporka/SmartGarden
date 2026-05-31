@@ -61,7 +61,7 @@
     {
       "name": "Button #1",
       "deviceType": 4,
-      "pin": 0
+      "pin": 23
     }
   ],
   "routes": [

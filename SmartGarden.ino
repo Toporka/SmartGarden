@@ -38,7 +38,6 @@ void setup()
     arrayDevices.push_back(button);
   }
 
-  EventBus eventBus;
   JsonArray routes = file["routes"].as<JsonArray>();
   for (JsonObject item : routes)
   {
@@ -58,8 +57,6 @@ void setup()
       }
     }
   }
-
-  EventKey event{ "Button #1", EventType::BUTTON_CLICK };
 }
 
 void loop() 
