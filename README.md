@@ -82,10 +82,10 @@ Button: Кнопка (события нажатия)
 4 - BUTTON_CLICK  
 5 - BUTTON_NO_CLICK
 # Библиотеки
-Adafruit_INA219.h
-OneWire.h
-DallasTemperature.h
-ArduinoJson.h
-SPIFFS.h
-BitFlags.h
+Adafruit_INA219.h  
+OneWire.h  
+DallasTemperature.h  
+ArduinoJson.h  
+SPIFFS.h  
+BitFlags.h  
 DHT.h
